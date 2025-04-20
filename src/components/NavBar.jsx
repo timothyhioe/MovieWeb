@@ -6,7 +6,7 @@ function NavBar() {
         <nav className="navbar">
             <div className="navbar-brand">
                 <Link to="/">
-                    Movie App
+                    Bioskop123
                 </Link>
             </div>
             <div className="navbar-links">

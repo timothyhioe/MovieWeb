@@ -1,20 +1,47 @@
 import MovieCard from "../components/MovieCard"
-import {useState} from "react"
+import {useState, useEffect} from "react"
 import '../css/Home.css'; // Import the CSS file for styling
+import {getPopularMovies, searchMovies} from "../services/api"; // Import the searchMovies function
 
 function Home () {
-    const [searchQuery, setSearchQuery] = useState("");
+    const [searchQuery, setSearchQuery] = useState(""); // State to store the search query entered by the user
+    const [movies, setMovies] = useState([]); // State to store the list of movies
+    const [error, setError] = useState(null); // State to store any error that occurs during the API call
+    const [loading, setLoading] = useState(true); // State to indicate if the data is still loading
 
-    const movies = [
-        {id : 1, title : "Adit dan Sopo Jarwo", release_date: "2020"},
-        {id : 2, title : "Jumbo", release_date: "2024"},
-        {id : 3, title : "Oppenheimer", release_date: "2023"},
-    ];
+    useEffect(() => {
+        const loadPopularMovies = async () => {
+            try{
+                const popularMovies = await getPopularMovies()
+                setMovies(popularMovies)
+            } catch(err) {
+                console.log(err)
+                setError("Failed to load movies...")
+            }
+            finally {
+                setLoading(false)
+            }
+        }
+        loadPopularMovies()
+    }, [])
 
-    const handleSearch = (e) => {
+    const handleSearch = async (e) => {
         e.preventDefault(); // Prevent the default form submission behavior (page reload)
-        alert(searchQuery);
-        setSearchQuery(""); // Clear the search input after submission
+        if(!searchQuery.trim()) return; // If the search query is empty, do nothing
+        if(loading) return; // If already loading, do nothing
+        
+        setLoading(true); // Set loading to true while fetching data
+
+        try{
+            const searchResults = await searchMovies(searchQuery); // Call the searchMovies function with the search query
+            setMovies(searchResults); // Update the movies state with the search results
+            setError(null); // Clear any previous error messages
+        }catch(err){
+            console.log(err);
+            setError("Failed to search movies...")
+        }finally{
+            setLoading(false) // Set loading to false after fetching data
+        }
     };
 
     return (
@@ -30,11 +57,16 @@ function Home () {
                 <button type="submit" className="search-button">Search</button>
             </form>
 
+            {error && <div className="error-message">{error}</div>} {/* Display error message if any */}
+
+            {loading ? <div className="loading">Loading...</div> : (
+
             <div className="movies-grid">
                 {movies.map((movie) => (
                     <MovieCard movie={movie} key={movie.id}/>
             ))}
             </div>
+            )}
         </div>
     );
 }
